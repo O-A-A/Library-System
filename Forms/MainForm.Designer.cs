@@ -22,9 +22,11 @@ namespace LibrarySystem.Forms
             this.menuBook = new System.Windows.Forms.ToolStripMenuItem();
             this.menuBorrow = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStock = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuFine = new System.Windows.Forms.ToolStripMenuItem();
             this.menuExit = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
-            this.SuspendLayout();
+            this.ResumeLayout(false);
+            this.PerformLayout();
             // 
             // menuStrip1
             // 
@@ -34,6 +36,7 @@ namespace LibrarySystem.Forms
             this.menuBook,
             this.menuBorrow,
             this.menuStock,
+            this.menuFine,
             this.menuExit});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -63,19 +66,25 @@ namespace LibrarySystem.Forms
             this.menuBook.Click += new System.EventHandler(this.menuBook_Click);
             // 
             // menuBorrow
-// 
+            // 
             this.menuBorrow.Name = "menuBorrow";
             this.menuBorrow.Size = new System.Drawing.Size(68, 21);
             this.menuBorrow.Text = "借阅归还";
             this.menuBorrow.Click += new System.EventHandler(this.menuBorrow_Click);
-
-
-
+            // 
+            // menuStock
+            // 
             this.menuStock.Name = "menuStock";
             this.menuStock.Size = new System.Drawing.Size(68, 21);
             this.menuStock.Text = "库存管理";
             this.menuStock.Click += new System.EventHandler(this.menuStock_Click);
-            // 新增
+            // 
+            // menuFine
+            // 
+            this.menuFine.Name = "menuFine";
+            this.menuFine.Size = new System.Drawing.Size(68, 21);
+            this.menuFine.Text = "罚款缴费";
+            this.menuFine.Click += new System.EventHandler(this.menuFine_Click);
             // 
             // menuExit
             // 
@@ -96,17 +105,16 @@ namespace LibrarySystem.Forms
             this.Text = "图书馆管理系统";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
         }
         #endregion
+
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem menuReader;
         private System.Windows.Forms.ToolStripMenuItem menuPublish;
         private System.Windows.Forms.ToolStripMenuItem menuBook;
         private System.Windows.Forms.ToolStripMenuItem menuBorrow;
-        private System.Windows.Forms.ToolStripMenuItem menuExit;
         private System.Windows.Forms.ToolStripMenuItem menuStock;
-
+        private System.Windows.Forms.ToolStripMenuItem menuFine;
+        private System.Windows.Forms.ToolStripMenuItem menuExit;
     }
 }

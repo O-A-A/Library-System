@@ -18,6 +18,7 @@ namespace LibrarySystem.Forms
         private void InitializeComponent()
         {
             this.panelTop = new System.Windows.Forms.Panel();
+            this.btnRefresh = new System.Windows.Forms.Button();
             this.btnDel = new System.Windows.Forms.Button();
             this.btnEdit = new System.Windows.Forms.Button();
             this.btnAdd = new System.Windows.Forms.Button();
@@ -34,6 +35,7 @@ namespace LibrarySystem.Forms
             // 
             // panelTop
             // 
+            this.panelTop.Controls.Add(this.btnRefresh);
             this.panelTop.Controls.Add(this.btnDel);
             this.panelTop.Controls.Add(this.btnEdit);
             this.panelTop.Controls.Add(this.btnAdd);
@@ -48,6 +50,15 @@ namespace LibrarySystem.Forms
             this.panelTop.Name = "panelTop";
             this.panelTop.Size = new System.Drawing.Size(700, 80);
             this.panelTop.TabIndex = 0;
+            // 
+            // btnRefresh
+            // 
+            this.btnRefresh.Location = new System.Drawing.Point(600, 54);
+            this.btnRefresh.Name = "btnRefresh";
+            this.btnRefresh.Size = new System.Drawing.Size(75, 23);
+            this.btnRefresh.TabIndex = 9;
+            this.btnRefresh.Text = "刷新";
+            this.btnRefresh.UseVisualStyleBackColor = true;
             // 
             // btnDel
             // 
@@ -173,5 +184,6 @@ namespace LibrarySystem.Forms
         private System.Windows.Forms.TextBox txtName;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.DataGridView dgvReaders;
+        private System.Windows.Forms.Button btnRefresh;
     }
 }

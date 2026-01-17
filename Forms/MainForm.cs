@@ -43,6 +43,14 @@ namespace LibrarySystem.Forms
             stockForm.ShowDialog();
         }
 
+        // 罚款缴费管理菜单点击事件
+    private void menuFine_Click(object sender, EventArgs e)
+        {
+            FinePaymentForm fineForm = new FinePaymentForm();
+            fineForm.MdiParent = this;
+            fineForm.Show();
+        }
+
         //图书管理菜单点击事件
         private void menuBook_Click(object sender, EventArgs e)
         {
