@@ -20,6 +20,7 @@ D:\课件\大三上\数据库原理\实验\CSharpTest\obj\Debug\net10.0-windows\
 D:\课件\大三上\数据库原理\实验\CSharpTest\obj\Debug\net10.0-windows\CSharpTest.AssemblyInfoInputs.cache
 D:\课件\大三上\数据库原理\实验\CSharpTest\obj\Debug\net10.0-windows\CSharpTest.AssemblyInfo.cs
 D:\课件\大三上\数据库原理\实验\CSharpTest\obj\Debug\net10.0-windows\CSharpTest.csproj.CoreCompileInputs.cache
+D:\课件\大三上\数据库原理\实验\CSharpTest\obj\Debug\net10.0-windows\CSharpTest.sourcelink.json
 D:\课件\大三上\数据库原理\实验\CSharpTest\obj\Debug\net10.0-windows\CSharpTest.csproj.Up2Date
 D:\课件\大三上\数据库原理\实验\CSharpTest\obj\Debug\net10.0-windows\CSharpTest.dll
 D:\课件\大三上\数据库原理\实验\CSharpTest\obj\Debug\net10.0-windows\refint\CSharpTest.dll

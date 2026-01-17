@@ -29,6 +29,27 @@ namespace LibrarySystem.Forms
             form.Show();
         }
 
+        // 打开出版社管理窗体 按钮事件
+        private void menuPublish_Click(object sender, EventArgs e)
+        {
+            // 实例化出版社窗体，弹窗打开，最常用的Winform窗体打开方式
+            PublishForm publishForm = new PublishForm();
+            publishForm.ShowDialog();
+        }
+
+        private void menuStock_Click(object sender, EventArgs e)
+        {
+            StockForm stockForm = new StockForm();
+            stockForm.ShowDialog();
+        }
+
+        //图书管理菜单点击事件
+        private void menuBook_Click(object sender, EventArgs e)
+        {
+            BookForm bookForm = new BookForm();
+            bookForm.ShowDialog();
+        }
+
         // 菜单：退出
         private void menuExit_Click(object sender, EventArgs e)
         {

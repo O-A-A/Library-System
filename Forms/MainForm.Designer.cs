@@ -14,12 +14,14 @@ namespace LibrarySystem.Forms
         }
 
         #region Windows Form Designer generated code
-
         private void InitializeComponent()
         {
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.menuReader = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuPublish = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuBook = new System.Windows.Forms.ToolStripMenuItem();
             this.menuBorrow = new System.Windows.Forms.ToolStripMenuItem();
+            this.menuStock = new System.Windows.Forms.ToolStripMenuItem();
             this.menuExit = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -28,7 +30,10 @@ namespace LibrarySystem.Forms
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.menuReader,
+            this.menuPublish,
+            this.menuBook,
             this.menuBorrow,
+            this.menuStock,
             this.menuExit});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -43,12 +48,34 @@ namespace LibrarySystem.Forms
             this.menuReader.Text = "读者管理";
             this.menuReader.Click += new System.EventHandler(this.menuReader_Click);
             // 
-            // menuBorrow
+            // menuPublish
             // 
+            this.menuPublish.Name = "menuPublish";
+            this.menuPublish.Size = new System.Drawing.Size(68, 21);
+            this.menuPublish.Text = "出版社管理";
+            this.menuPublish.Click += new System.EventHandler(this.menuPublish_Click);
+            // 
+            // menuBook
+            // 
+            this.menuBook.Name = "menuBook";
+            this.menuBook.Size = new System.Drawing.Size(68, 21);
+            this.menuBook.Text = "图书管理";
+            this.menuBook.Click += new System.EventHandler(this.menuBook_Click);
+            // 
+            // menuBorrow
+// 
             this.menuBorrow.Name = "menuBorrow";
             this.menuBorrow.Size = new System.Drawing.Size(68, 21);
             this.menuBorrow.Text = "借阅归还";
             this.menuBorrow.Click += new System.EventHandler(this.menuBorrow_Click);
+
+
+
+            this.menuStock.Name = "menuStock";
+            this.menuStock.Size = new System.Drawing.Size(68, 21);
+            this.menuStock.Text = "库存管理";
+            this.menuStock.Click += new System.EventHandler(this.menuStock_Click);
+            // 新增
             // 
             // menuExit
             // 
@@ -71,14 +98,15 @@ namespace LibrarySystem.Forms
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
-
         #endregion
-
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem menuReader;
+        private System.Windows.Forms.ToolStripMenuItem menuPublish;
+        private System.Windows.Forms.ToolStripMenuItem menuBook;
         private System.Windows.Forms.ToolStripMenuItem menuBorrow;
         private System.Windows.Forms.ToolStripMenuItem menuExit;
+        private System.Windows.Forms.ToolStripMenuItem menuStock;
+
     }
 }
