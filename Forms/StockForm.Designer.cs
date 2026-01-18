@@ -21,7 +21,7 @@ namespace LibrarySystem.Forms
             this.panelTop = new System.Windows.Forms.Panel();
             this.cmbStatus = new System.Windows.Forms.ComboBox();
             this.label4 = new System.Windows.Forms.Label();
-            this.txtLocation = new System.Windows.Forms.TextBox();
+            this.cmbLocation = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
             this.cmbBook = new System.Windows.Forms.ComboBox();
             this.label2 = new System.Windows.Forms.Label();
@@ -65,7 +65,7 @@ namespace LibrarySystem.Forms
             this.panelTop.BackColor = System.Drawing.Color.White;
             this.panelTop.Controls.Add(this.cmbStatus);
             this.panelTop.Controls.Add(this.label4);
-            this.panelTop.Controls.Add(this.txtLocation);
+            this.panelTop.Controls.Add(this.cmbLocation);
             this.panelTop.Controls.Add(this.label3);
             this.panelTop.Controls.Add(this.cmbBook);
             this.panelTop.Controls.Add(this.label2);
@@ -103,7 +103,7 @@ namespace LibrarySystem.Forms
             this.cmbBook.FormattingEnabled = true;
             this.cmbBook.Location = new System.Drawing.Point(85, 19);
             this.cmbBook.Name = "cmbBook";
-            this.cmbBook.Size = new System.Drawing.Size(200, 27);
+            this.cmbBook.Size = new System.Drawing.Size(180, 27);
             this.cmbBook.TabIndex = 5;
 
             // 
@@ -112,24 +112,37 @@ namespace LibrarySystem.Forms
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft YaHei", 10F);
             this.label3.ForeColor = System.Drawing.Color.FromArgb(52, 73, 94);
-            this.label3.Location = new System.Drawing.Point(300, 22);
+            this.label3.Location = new System.Drawing.Point(280, 22);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(65, 20);
             this.label3.TabIndex = 6;
             this.label3.Text = "📍 位置：";
 
             // 
-            // txtLocation
+            // cmbLocation - 位置下拉框（新增）
             // 
-            this.txtLocation.BackColor = System.Drawing.Color.FromArgb(236, 240, 241);
-            this.txtLocation.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtLocation.Font = new System.Drawing.Font("Microsoft YaHei", 10F);
-            this.txtLocation.ForeColor = System.Drawing.Color.FromArgb(52, 73, 94);
-            this.txtLocation.Location = new System.Drawing.Point(370, 20);
-            this.txtLocation.Name = "txtLocation";
-            this.txtLocation.Size = new System.Drawing.Size(120, 25);
-            this.txtLocation.TabIndex = 7;
-            this.txtLocation.Text = "一楼社科区";
+            this.cmbLocation.BackColor = System.Drawing.Color.FromArgb(236, 240, 241);
+            this.cmbLocation.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbLocation.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.cmbLocation.Font = new System.Drawing.Font("Microsoft YaHei", 10F);
+            this.cmbLocation.ForeColor = System.Drawing.Color.FromArgb(52, 73, 94);
+            this.cmbLocation.FormattingEnabled = true;
+            this.cmbLocation.Items.AddRange(new object[] {
+            "一楼-社科区A",
+            "一楼-社科区B",
+            "一楼-文学区A",
+            "一楼-文学区B",
+            "二楼-理工区A",
+            "二楼-理工区B",
+            "二楼-计算机区",
+            "三楼-外文区",
+            "三楼-期刊区",
+            "四楼-特藏区",
+            "四楼-古籍区"});
+            this.cmbLocation.Location = new System.Drawing.Point(350, 19);
+            this.cmbLocation.Name = "cmbLocation";
+            this.cmbLocation.Size = new System.Drawing.Size(130, 27);
+            this.cmbLocation.TabIndex = 7;
 
             // 
             // label4 - 状态标签
@@ -137,7 +150,7 @@ namespace LibrarySystem.Forms
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Microsoft YaHei", 10F);
             this.label4.ForeColor = System.Drawing.Color.FromArgb(52, 73, 94);
-            this.label4.Location = new System.Drawing.Point(505, 22);
+            this.label4.Location = new System.Drawing.Point(495, 22);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(65, 20);
             this.label4.TabIndex = 8;
@@ -157,7 +170,7 @@ namespace LibrarySystem.Forms
             "已借出",
             "损坏",
             "丢失"});
-            this.cmbStatus.Location = new System.Drawing.Point(575, 19);
+            this.cmbStatus.Location = new System.Drawing.Point(565, 19);
             this.cmbStatus.Name = "cmbStatus";
             this.cmbStatus.Size = new System.Drawing.Size(90, 27);
             this.cmbStatus.TabIndex = 9;
@@ -299,7 +312,7 @@ namespace LibrarySystem.Forms
         private System.Windows.Forms.Panel panelTop;
         private System.Windows.Forms.ComboBox cmbStatus;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TextBox txtLocation;
+        private System.Windows.Forms.ComboBox cmbLocation;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.ComboBox cmbBook;
         private System.Windows.Forms.Label label2;

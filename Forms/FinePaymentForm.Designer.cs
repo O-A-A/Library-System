@@ -22,7 +22,7 @@ namespace LibrarySystem.Forms
             this.btnQuery = new System.Windows.Forms.Button();
             this.txtOperator = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
-            this.cmbFineType = new System.Windows.Forms.ComboBox();
+            this.txtFineType = new System.Windows.Forms.TextBox();
             this.label6 = new System.Windows.Forms.Label();
             this.btnPay = new System.Windows.Forms.Button();
             this.txtPayAmount = new System.Windows.Forms.TextBox();
@@ -80,7 +80,7 @@ namespace LibrarySystem.Forms
             this.panelQuery.Controls.Add(this.btnQuery);
             this.panelQuery.Controls.Add(this.txtOperator);
             this.panelQuery.Controls.Add(this.label7);
-            this.panelQuery.Controls.Add(this.cmbFineType);
+            this.panelQuery.Controls.Add(this.txtFineType);
             this.panelQuery.Controls.Add(this.label6);
             this.panelQuery.Controls.Add(this.btnPay);
             this.panelQuery.Controls.Add(this.txtPayAmount);
@@ -213,6 +213,7 @@ namespace LibrarySystem.Forms
             this.txtPayAmount.ForeColor = System.Drawing.Color.FromArgb(52, 73, 94);
             this.txtPayAmount.Location = new System.Drawing.Point(110, 63);
             this.txtPayAmount.Name = "txtPayAmount";
+            this.txtPayAmount.ReadOnly = true;
             this.txtPayAmount.Size = new System.Drawing.Size(100, 25);
             this.txtPayAmount.TabIndex = 8;
 
@@ -229,22 +230,19 @@ namespace LibrarySystem.Forms
             this.label6.Text = "📋 罚款类型：";
 
             // 
-            // cmbFineType
+            // txtFineType - 罚款类型（只读，自动判断）
             // 
-            this.cmbFineType.BackColor = System.Drawing.Color.FromArgb(236, 240, 241);
-            this.cmbFineType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbFineType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.cmbFineType.Font = new System.Drawing.Font("Microsoft YaHei", 10F);
-            this.cmbFineType.ForeColor = System.Drawing.Color.FromArgb(52, 73, 94);
-            this.cmbFineType.FormattingEnabled = true;
-            this.cmbFineType.Items.AddRange(new object[] {
-            "逾期罚款",
-            "损坏罚款",
-            "逾期+损坏"});
-            this.cmbFineType.Location = new System.Drawing.Point(320, 62);
-            this.cmbFineType.Name = "cmbFineType";
-            this.cmbFineType.Size = new System.Drawing.Size(120, 27);
-            this.cmbFineType.TabIndex = 11;
+            this.txtFineType.BackColor = System.Drawing.Color.FromArgb(236, 240, 241);
+            this.txtFineType.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtFineType.Font = new System.Drawing.Font("Microsoft YaHei", 10F);
+            this.txtFineType.ForeColor = System.Drawing.Color.FromArgb(52, 73, 94);
+            this.txtFineType.Location = new System.Drawing.Point(320, 63);
+            this.txtFineType.Name = "txtFineType";
+            this.txtFineType.ReadOnly = true;
+            this.txtFineType.Size = new System.Drawing.Size(120, 25);
+            this.txtFineType.TabIndex = 11;
+            this.txtFineType.Text = "请选择记录";
+            this.txtFineType.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
 
             // 
             // label7 - 操作员标签
@@ -334,7 +332,7 @@ namespace LibrarySystem.Forms
             this.lblFineRecords.Name = "lblFineRecords";
             this.lblFineRecords.Size = new System.Drawing.Size(950, 28);
             this.lblFineRecords.TabIndex = 0;
-            this.lblFineRecords.Text = "⚠️ 未缴罚款记录（点击选择要缴费的记录）";
+            this.lblFineRecords.Text = "⚠️ 未缴罚款记录（点击选择要缴费的记录，金额和类型自动填充）";
             this.lblFineRecords.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblFineRecords.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
 
@@ -473,7 +471,7 @@ namespace LibrarySystem.Forms
         private System.Windows.Forms.Button btnQuery;
         private System.Windows.Forms.TextBox txtOperator;
         private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.ComboBox cmbFineType;
+        private System.Windows.Forms.TextBox txtFineType;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Button btnPay;
         private System.Windows.Forms.TextBox txtPayAmount;

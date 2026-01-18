@@ -32,7 +32,17 @@ namespace LibrarySystem.Forms
             cmbPublish.DataSource = dt;
             cmbPublish.DisplayMember = "publish_name";
             cmbPublish.ValueMember = "publish_id";
-            cmbPublish.SelectedIndex = 0;
+            
+            // 修复：判断是否有数据再设置选中项
+            if (dt.Rows.Count > 0)
+            {
+                cmbPublish.SelectedIndex = 0;
+            }
+            else
+            {
+                MessageBox.Show("当前没有出版社数据，请先添加出版社！", "提示",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
         #endregion
 
@@ -47,21 +57,36 @@ namespace LibrarySystem.Forms
             DataTable dt = MysqlHelper.ExecuteDataTable(sql);
             dgvBooks.DataSource = dt;
 
-            // 设置表格中文表头，美化展示
-            dgvBooks.Columns["book_id"].HeaderText = "图书编号";
-            dgvBooks.Columns["isbn"].HeaderText = "ISBN号";
-            dgvBooks.Columns["book_name"].HeaderText = "图书名称";
-            dgvBooks.Columns["book_author"].HeaderText = "图书作者";
-            dgvBooks.Columns["publish_name"].HeaderText = "出版社";
-            dgvBooks.Columns["book_price"].HeaderText = "图书价格";
-            dgvBooks.Columns["book_stock"].HeaderText = "库存数量";
-            dgvBooks.Columns["book_desc"].HeaderText = "图书简介";
+            // 修复：判断列是否存在再设置表头
+            if (dgvBooks.Columns["book_id"] != null)
+                dgvBooks.Columns["book_id"].HeaderText = "图书编号";
+            if (dgvBooks.Columns["isbn"] != null)
+                dgvBooks.Columns["isbn"].HeaderText = "ISBN号";
+            if (dgvBooks.Columns["book_name"] != null)
+                dgvBooks.Columns["book_name"].HeaderText = "图书名称";
+            if (dgvBooks.Columns["book_author"] != null)
+                dgvBooks.Columns["book_author"].HeaderText = "图书作者";
+            if (dgvBooks.Columns["publish_name"] != null)
+                dgvBooks.Columns["publish_name"].HeaderText = "出版社";
+            if (dgvBooks.Columns["book_price"] != null)
+                dgvBooks.Columns["book_price"].HeaderText = "图书价格";
+            if (dgvBooks.Columns["book_stock"] != null)
+                dgvBooks.Columns["book_stock"].HeaderText = "库存数量";
+            if (dgvBooks.Columns["book_desc"] != null)
+                dgvBooks.Columns["book_desc"].HeaderText = "图书简介";
         }
         #endregion
 
         #region 添加图书按钮事件 - 完整校验+参数化SQL（增加ISBN）
         private void btnAdd_Click(object sender, EventArgs e)
         {
+            // 0. 检查是否有出版社数据
+            if (cmbPublish.SelectedValue == null)
+            {
+                MessageBox.Show("请先添加出版社数据！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             // 1. 必填项校验
             if (string.IsNullOrWhiteSpace(txtName.Text))
             {
@@ -118,7 +143,7 @@ namespace LibrarySystem.Forms
             }
             catch (Exception ex)
             {
-                if(ex.Message.Contains("Duplicate entry"))
+                if (ex.Message.Contains("Duplicate entry"))
                 {
                     MessageBox.Show("添加失败：该ISBN号已存在，请勿重复录入！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
@@ -140,7 +165,14 @@ namespace LibrarySystem.Forms
                 return;
             }
 
-            // 2. 必填项校验
+            // 2. 检查是否有出版社数据
+            if (cmbPublish.SelectedValue == null)
+            {
+                MessageBox.Show("请先添加出版社数据！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // 3. 必填项校验
             if (string.IsNullOrWhiteSpace(txtName.Text))
             {
                 MessageBox.Show("图书名称不能为空！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -160,7 +192,7 @@ namespace LibrarySystem.Forms
                 return;
             }
 
-            // 3. 数字类型校验
+            // 4. 数字类型校验
             if (!decimal.TryParse(txtPrice.Text, out decimal price))
             {
                 MessageBox.Show("图书价格请输入有效的数字！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -176,7 +208,7 @@ namespace LibrarySystem.Forms
 
             try
             {
-                // 4. 参数化修改SQL，增加ISBN字段
+                // 5. 参数化修改SQL，增加ISBN字段
                 string sql = @"UPDATE books 
                                SET isbn = @isbn, book_name = @name, book_author = @author, publish_id = @pid,
                                    book_price = @price, book_stock = @stock, book_desc = @desc
@@ -258,15 +290,15 @@ namespace LibrarySystem.Forms
             currentBookId = Convert.ToInt32(row.Cells["book_id"].Value);
 
             // 回填表单数据，处理数据库NULL值，防止崩溃
-            txtISBN.Text = row.Cells["isbn"].Value.ToString();
-            txtName.Text = row.Cells["book_name"].Value.ToString();
-            txtAuthor.Text = row.Cells["book_author"].Value.ToString();
-            txtPrice.Text = row.Cells["book_price"].Value.ToString();
-            txtStock.Text = row.Cells["book_stock"].Value.ToString();
-            txtDesc.Text = row.Cells["book_desc"].Value == DBNull.Value ? "" : row.Cells["book_desc"].Value.ToString();
-            
+            txtISBN.Text = row.Cells["isbn"].Value?.ToString() ?? "";
+            txtName.Text = row.Cells["book_name"].Value?.ToString() ?? "";
+            txtAuthor.Text = row.Cells["book_author"].Value?.ToString() ?? "";
+            txtPrice.Text = row.Cells["book_price"].Value?.ToString() ?? "0.00";
+            txtStock.Text = row.Cells["book_stock"].Value?.ToString() ?? "0";
+            txtDesc.Text = row.Cells["book_desc"].Value == DBNull.Value ? "" : row.Cells["book_desc"].Value?.ToString() ?? "";
+
             // 精准回填出版社下拉框
-            string publishName = row.Cells["publish_name"].Value.ToString();
+            string publishName = row.Cells["publish_name"].Value?.ToString() ?? "";
             cmbPublish.Text = publishName;
         }
         #endregion
@@ -280,7 +312,12 @@ namespace LibrarySystem.Forms
             txtPrice.Text = "0.00";
             txtStock.Text = "0";
             txtDesc.Clear();
-            cmbPublish.SelectedIndex = 0;
+            
+            // 修复：判断是否有数据再设置选中项
+            if (cmbPublish.Items.Count > 0)
+            {
+                cmbPublish.SelectedIndex = 0;
+            }
             currentBookId = -1;
         }
         #endregion
