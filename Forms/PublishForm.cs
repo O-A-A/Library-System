@@ -19,33 +19,36 @@ namespace LibrarySystem.Forms
         #region 窗体加载事件：初始化加载出版社数据
         private void PublishForm_Load(object sender, EventArgs e)
         {
-            LoadPublishData(); // 加载表格数据
+            LoadPublishData();
         }
         #endregion
 
         #region 核心方法：加载出版社表格数据
         private void LoadPublishData()
         {
-            // 查询出版社所有数据，排序：最新添加的在前面
             string sql = @"SELECT publish_id, publish_name, publish_address, publish_phone, publish_desc 
                            FROM publishers 
                            ORDER BY publish_id DESC";
             DataTable dt = MysqlHelper.ExecuteDataTable(sql);
             dgvPublishers.DataSource = dt;
 
-            // 可选：给表格列设置中文表头（美化，可删除）
-            dgvPublishers.Columns["publish_id"].HeaderText = "序号";
-            dgvPublishers.Columns["publish_name"].HeaderText = "出版社名称";
-            dgvPublishers.Columns["publish_address"].HeaderText = "出版社地址";
-            dgvPublishers.Columns["publish_phone"].HeaderText = "联系电话";
-            dgvPublishers.Columns["publish_desc"].HeaderText = "出版社简介";
+            // 设置中文表头
+            if (dgvPublishers.Columns["publish_id"] != null)
+                dgvPublishers.Columns["publish_id"].HeaderText = "序号";
+            if (dgvPublishers.Columns["publish_name"] != null)
+                dgvPublishers.Columns["publish_name"].HeaderText = "出版社名称";
+            if (dgvPublishers.Columns["publish_address"] != null)
+                dgvPublishers.Columns["publish_address"].HeaderText = "出版社地址";
+            if (dgvPublishers.Columns["publish_phone"] != null)
+                dgvPublishers.Columns["publish_phone"].HeaderText = "联系电话";
+            if (dgvPublishers.Columns["publish_desc"] != null)
+                dgvPublishers.Columns["publish_desc"].HeaderText = "出版社简介";
         }
         #endregion
 
         #region 添加出版社按钮事件
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            // 1. 数据校验：出版社名称为必填项，不能为空
             if (string.IsNullOrWhiteSpace(txtName.Text))
             {
                 MessageBox.Show("出版社名称不能为空！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -55,7 +58,6 @@ namespace LibrarySystem.Forms
 
             try
             {
-                // 2. 参数化SQL 新增语句，防止SQL注入，和你的读者管理规范一致
                 string sql = @"INSERT INTO publishers (publish_name, publish_address, publish_phone, publish_desc) 
                                VALUES (@name, @addr, @phone, @desc)";
                 MySqlParameter[] param = {
@@ -65,44 +67,184 @@ namespace LibrarySystem.Forms
                     new MySqlParameter("@desc", txtDesc.Text.Trim())
                 };
 
-                // 3. 执行新增并刷新表格
                 MysqlHelper.ExecuteNonQuery(sql, param);
                 LoadPublishData();
                 MessageBox.Show("出版社添加成功！", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                ClearForm(); // 清空表单，方便继续添加
+                ClearForm();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"添加失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("添加失败：" + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         #endregion
 
-        #region 删除出版社按钮事件
+        #region 删除出版社按钮事件（处理外键约束）
         private void btnDel_Click(object sender, EventArgs e)
         {
-            // 1. 校验：是否选中了要删除的出版社
             if (currentPublishId == -1 || dgvPublishers.SelectedRows.Count == 0)
             {
                 MessageBox.Show("请先在表格中选中要删除的出版社！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            // 2. 二次确认删除，防止误操作
-            if (MessageBox.Show("确定删除该出版社吗？删除后相关数据将关联失效！", "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            string publishName = txtName.Text;
+
+            try
             {
-                try
+                using (MySqlConnection conn = MysqlHelper.GetConnection())
                 {
-                    string sql = "DELETE FROM publishers WHERE publish_id = @id";
-                    MysqlHelper.ExecuteNonQuery(sql, new MySqlParameter("@id", currentPublishId));
-                    LoadPublishData();
-                    MessageBox.Show("出版社删除成功！", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    ClearForm(); // 清空表单+重置选中ID
+                    conn.Open();
+
+                    // 检查是否有关联的图书
+                    string checkBooks = "SELECT COUNT(*) FROM books WHERE publish_id = @id";
+                    int bookCount = 0;
+                    using (MySqlCommand cmd = new MySqlCommand(checkBooks, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", currentPublishId);
+                        bookCount = Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+
+                    // 如果有关联图书，提示用户选择处理方式
+                    if (bookCount > 0)
+                    {
+                        // 获取关联图书的详细信息
+                        string getBooks = "SELECT book_name FROM books WHERE publish_id = @id LIMIT 5";
+                        string bookList = "";
+                        using (MySqlCommand cmd = new MySqlCommand(getBooks, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@id", currentPublishId);
+                            using (MySqlDataReader reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    bookList += "\n  - " + reader.GetString("book_name");
+                                }
+                            }
+                        }
+                        if (bookCount > 5)
+                        {
+                            bookList += "\n  ... 等共 " + bookCount + " 本图书";
+                        }
+
+                        // 询问用户是否强制删除
+                        DialogResult result = MessageBox.Show(
+                            "无法直接删除！\n\n" +
+                            "出版社【" + publishName + "】关联了 " + bookCount + " 本图书：" + bookList + "\n\n" +
+                            "请选择处理方式：\n" +
+                            "【是】- 将关联图书的出版社设为\"未知出版社\"后删除\n" +
+                            "【否】- 取消删除，手动处理关联图书",
+                            "存在关联图书",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Warning);
+
+                        if (result != DialogResult.Yes)
+                        {
+                            return;
+                        }
+
+                        // 用户选择强制删除：先处理关联图书
+                        using (MySqlTransaction trans = conn.BeginTransaction())
+                        {
+                            try
+                            {
+                                // 检查是否存在"未知出版社"
+                                string checkUnknown = "SELECT publish_id FROM publishers WHERE publish_name = '未知出版社'";
+                                int unknownPublishId = 0;
+                                using (MySqlCommand cmd = new MySqlCommand(checkUnknown, conn, trans))
+                                {
+                                    object result2 = cmd.ExecuteScalar();
+                                    if (result2 != null && result2 != DBNull.Value)
+                                    {
+                                        unknownPublishId = Convert.ToInt32(result2);
+                                    }
+                                }
+
+                                // 如果不存在"未知出版社"，创建一个
+                                if (unknownPublishId == 0)
+                                {
+                                    string insertUnknown = @"INSERT INTO publishers (publish_name, publish_desc) 
+                                                             VALUES ('未知出版社', '用于存放原出版社被删除的图书')";
+                                    using (MySqlCommand cmd = new MySqlCommand(insertUnknown, conn, trans))
+                                    {
+                                        cmd.ExecuteNonQuery();
+                                    }
+                                    using (MySqlCommand cmd = new MySqlCommand("SELECT LAST_INSERT_ID()", conn, trans))
+                                    {
+                                        unknownPublishId = Convert.ToInt32(cmd.ExecuteScalar());
+                                    }
+                                }
+
+                                // 将关联图书转移到"未知出版社"
+                                string updateBooks = "UPDATE books SET publish_id = @newId WHERE publish_id = @oldId";
+                                using (MySqlCommand cmd = new MySqlCommand(updateBooks, conn, trans))
+                                {
+                                    cmd.Parameters.AddWithValue("@newId", unknownPublishId);
+                                    cmd.Parameters.AddWithValue("@oldId", currentPublishId);
+                                    cmd.ExecuteNonQuery();
+                                }
+
+                                // 删除出版社
+                                string deletePublish = "DELETE FROM publishers WHERE publish_id = @id";
+                                using (MySqlCommand cmd = new MySqlCommand(deletePublish, conn, trans))
+                                {
+                                    cmd.Parameters.AddWithValue("@id", currentPublishId);
+                                    cmd.ExecuteNonQuery();
+                                }
+
+                                trans.Commit();
+
+                                MessageBox.Show(
+                                    "删除成功！\n\n" +
+                                    "已删除出版社【" + publishName + "】\n" +
+                                    "其关联的 " + bookCount + " 本图书已转移至【未知出版社】",
+                                    "删除成功",
+                                    MessageBoxButtons.OK,
+                                    MessageBoxIcon.Information);
+
+                                LoadPublishData();
+                                ClearForm();
+                            }
+                            catch
+                            {
+                                trans.Rollback();
+                                throw;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // 没有关联图书，直接确认删除
+                        DialogResult dialogResult = MessageBox.Show(
+                            "确定要删除出版社【" + publishName + "】吗？\n\n此操作不可恢复！",
+                            "确认删除",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question);
+
+                        if (dialogResult != DialogResult.Yes)
+                            return;
+
+                        string deletePublish = "DELETE FROM publishers WHERE publish_id = @id";
+                        using (MySqlCommand cmd = new MySqlCommand(deletePublish, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@id", currentPublishId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        MessageBox.Show(
+                            "删除成功！\n\n已删除出版社【" + publishName + "】",
+                            "删除成功",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+
+                        LoadPublishData();
+                        ClearForm();
+                    }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("删除失败：该出版社存在关联图书，无法删除!\n" + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("删除失败：" + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         #endregion
@@ -110,14 +252,12 @@ namespace LibrarySystem.Forms
         #region 修改出版社按钮事件
         private void btnEdit_Click(object sender, EventArgs e)
         {
-            // 1. 校验：是否选中要修改的出版社
             if (currentPublishId == -1)
             {
                 MessageBox.Show("请先在表格中选中要修改的出版社！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            // 2. 校验：出版社名称不能为空
             if (string.IsNullOrWhiteSpace(txtName.Text))
             {
                 MessageBox.Show("出版社名称不能为空！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -127,7 +267,6 @@ namespace LibrarySystem.Forms
 
             try
             {
-                // 3. 参数化修改SQL语句
                 string sql = @"UPDATE publishers 
                                SET publish_name = @name, publish_address = @addr, 
                                    publish_phone = @phone, publish_desc = @desc 
@@ -140,7 +279,6 @@ namespace LibrarySystem.Forms
                     new MySqlParameter("@id", currentPublishId)
                 };
 
-                // 4. 执行修改并刷新
                 int rows = MysqlHelper.ExecuteNonQuery(sql, param);
                 if (rows > 0)
                 {
@@ -155,40 +293,38 @@ namespace LibrarySystem.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"修改失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("修改失败：" + ex.Message, "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
         #endregion
 
-        #region 表格点击事件：回填表单数据（修改前置）
+        #region 表格点击事件：回填表单数据
         private void dgvPublishers_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            // 修复：点击表头不执行，防止索引越界报错
             if (e.RowIndex < 0 || e.RowIndex >= dgvPublishers.Rows.Count)
             {
                 ClearForm();
                 return;
             }
 
-            // 获取选中行数据
             DataGridViewRow row = dgvPublishers.Rows[e.RowIndex];
             currentPublishId = Convert.ToInt32(row.Cells["publish_id"].Value);
-            // 回填表单，处理数据库NULL值，防止程序崩溃
-            txtName.Text = row.Cells["publish_name"].Value.ToString();
-            txtAddress.Text = row.Cells["publish_address"].Value == DBNull.Value ? "" : row.Cells["publish_address"].Value.ToString();
-            txtPhone.Text = row.Cells["publish_phone"].Value == DBNull.Value ? "" : row.Cells["publish_phone"].Value.ToString();
-            txtDesc.Text = row.Cells["publish_desc"].Value == DBNull.Value ? "" : row.Cells["publish_desc"].Value.ToString();
+            
+            txtName.Text = row.Cells["publish_name"].Value?.ToString() ?? "";
+            txtAddress.Text = row.Cells["publish_address"].Value == DBNull.Value ? "" : row.Cells["publish_address"].Value?.ToString() ?? "";
+            txtPhone.Text = row.Cells["publish_phone"].Value == DBNull.Value ? "" : row.Cells["publish_phone"].Value?.ToString() ?? "";
+            txtDesc.Text = row.Cells["publish_desc"].Value == DBNull.Value ? "" : row.Cells["publish_desc"].Value?.ToString() ?? "";
         }
         #endregion
 
-        #region 公共方法：清空表单+重置选中状态
+        #region 清空表单
         private void ClearForm()
         {
             txtName.Clear();
             txtAddress.Clear();
             txtPhone.Clear();
             txtDesc.Clear();
-            currentPublishId = -1; // 重置选中ID
+            currentPublishId = -1;
         }
         #endregion
     }

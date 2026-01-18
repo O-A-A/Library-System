@@ -17,16 +17,14 @@ namespace LibrarySystem.Forms
         private void menuReader_Click(object sender, EventArgs e)
         {
             ReaderForm form = new ReaderForm();
-            form.MdiParent = this;
-            form.Show();
+            form.ShowDialog();
         }
 
         // 菜单：借阅归还
         private void menuBorrow_Click(object sender, EventArgs e)
         {
             BorrowReturnForm form = new BorrowReturnForm();
-            form.MdiParent = this;
-            form.Show();
+            form.ShowDialog();
         }
 
         // 打开出版社管理窗体 按钮事件
@@ -47,8 +45,7 @@ namespace LibrarySystem.Forms
     private void menuFine_Click(object sender, EventArgs e)
         {
             FinePaymentForm fineForm = new FinePaymentForm();
-            fineForm.MdiParent = this;
-            fineForm.Show();
+            fineForm.ShowDialog();
         }
 
         //图书管理菜单点击事件

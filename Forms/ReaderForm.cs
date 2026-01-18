@@ -32,17 +32,16 @@ namespace LibrarySystem.Forms
             cmbType.ValueMember = "type_id";
         }
 
-        // 加载表格-读者数据 ✅【原版SQL、零修改、加中文列名设置、防空引用处理】
+        // 加载表格-读者数据
         private void LoadReaders()
         {
-            // ✅ 还是你最开始的原版SQL，一行没改，不会有任何SQL报错
             string sql = @"SELECT r.reader_id, r.name, t.type_name, r.phone, r.borrowed_count, r.total_unpaid_fines
                            FROM readers r 
                            LEFT JOIN reader_types t ON r.type_id = t.type_id";
             DataTable dt = MysqlHelper.ExecuteDataTable(sql);
             dgvReaders.DataSource = dt;
 
-            // ✅ 核心：设置所有列的中文名称，解决英文列名问题，无任何匹配问题
+            // 设置所有列的中文名称
             dgvReaders.Columns["reader_id"].HeaderText = "读者ID";
             dgvReaders.Columns["name"].HeaderText = "姓名";
             dgvReaders.Columns["type_name"].HeaderText = "读者类型";
@@ -50,7 +49,7 @@ namespace LibrarySystem.Forms
             dgvReaders.Columns["borrowed_count"].HeaderText = "借阅数量";
             dgvReaders.Columns["total_unpaid_fines"].HeaderText = "未缴罚款(元)";
 
-            // ✅ 防空引用报错：先判断列是否存在，再设置格式，彻底杜绝空引用
+            // 防空引用报错
             if (dgvReaders.Columns["total_unpaid_fines"] != null)
             {
                 dgvReaders.Columns["total_unpaid_fines"].DefaultCellStyle.Format = "0.00";
@@ -76,60 +75,183 @@ namespace LibrarySystem.Forms
             };
 
             MysqlHelper.ExecuteNonQuery(sql, param);
-            LoadReaders(); // 刷新表格
+            LoadReaders();
             MessageBox.Show("读者添加成功！");
-            
-            // 优化：添加成功后清空表单，方便继续新增
             ClearForm();
         }
 
-        // 删除读者按钮事件（优化增强版）
-        // 删除读者按钮事件（修复外键约束报错，先删借阅记录再删读者）
-private void btnDel_Click(object sender, EventArgs e)
-{
-    // 校验是否选中有效数据
-    if (currentReaderId == -1 || dgvReaders.SelectedRows.Count == 0)
-    {
-        MessageBox.Show("请先在表格中选中要删除的读者！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        return;
-    }
-
-    if (MessageBox.Show("确定删除该读者？删除后该读者的所有借阅记录也会一并删除，数据不可恢复！", "确认删除", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-    {
-        try
+        // 删除读者按钮事件（完整修复版：处理所有外键约束 + 详细提示）
+        private void btnDel_Click(object sender, EventArgs e)
         {
-            // ============ 核心修复：第一步，先删除该读者的所有借阅记录 ============
-            string delBorrowSql = "DELETE FROM borrow_records WHERE reader_id = @id";
-            MysqlHelper.ExecuteNonQuery(delBorrowSql, new MySqlParameter("@id", currentReaderId));
+            // 校验是否选中有效数据
+            if (currentReaderId == -1 || dgvReaders.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("请先在表格中选中要删除的读者！", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
 
-            // ============ 第二步，再删除读者 ============
-            string delReaderSql = "DELETE FROM readers WHERE reader_id = @id";
-            MysqlHelper.ExecuteNonQuery(delReaderSql, new MySqlParameter("@id", currentReaderId));
+            string readerName = txtName.Text;
 
-            LoadReaders();
-            MessageBox.Show("读者删除成功！该读者的借阅记录已一并清除", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            ClearForm(); // 清空表单+重置选中ID
+            try
+            {
+                using (MySqlConnection conn = MysqlHelper.GetConnection())
+                {
+                    conn.Open();
+
+                    // 1. 检查是否有未归还的图书
+                    string checkBorrowed = @"SELECT COUNT(*) FROM borrow_records 
+                                             WHERE reader_id = @id AND return_date IS NULL";
+                    using (MySqlCommand cmd = new MySqlCommand(checkBorrowed, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", currentReaderId);
+                        int borrowedCount = Convert.ToInt32(cmd.ExecuteScalar());
+                        if (borrowedCount > 0)
+                        {
+                            MessageBox.Show(
+                                $"❌ 无法删除！\n\n" +
+                                $"读者【{readerName}】还有 {borrowedCount} 本书未归还，\n" +
+                                $"请先归还图书再删除。",
+                                "删除失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+                    }
+
+                    // 2. 检查是否有未缴罚款
+                    string checkFines = "SELECT total_unpaid_fines FROM readers WHERE reader_id = @id";
+                    decimal unpaidFines = 0;
+                    using (MySqlCommand cmd = new MySqlCommand(checkFines, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", currentReaderId);
+                        object result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            unpaidFines = Convert.ToDecimal(result);
+                        }
+                    }
+                    if (unpaidFines > 0)
+                    {
+                        MessageBox.Show(
+                            $"❌ 无法删除！\n\n" +
+                            $"读者【{readerName}】还有未缴罚款 {unpaidFines:F2} 元，\n" +
+                            $"请先缴清罚款再删除。",
+                            "删除失败", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    // 3. 统计关联数据数量
+                    int finePaymentCount = 0;
+                    int borrowRecordCount = 0;
+
+                    string countPayment = "SELECT COUNT(*) FROM fine_payment WHERE reader_id = @id";
+                    using (MySqlCommand cmd = new MySqlCommand(countPayment, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", currentReaderId);
+                        finePaymentCount = Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+
+                    string countBorrow = "SELECT COUNT(*) FROM borrow_records WHERE reader_id = @id";
+                    using (MySqlCommand cmd = new MySqlCommand(countBorrow, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", currentReaderId);
+                        borrowRecordCount = Convert.ToInt32(cmd.ExecuteScalar());
+                    }
+
+                    // 4. 显示确认对话框
+                    string confirmMessage = $"确定要删除读者【{readerName}】吗？\n\n";
+                    if (borrowRecordCount > 0 || finePaymentCount > 0)
+                    {
+                        confirmMessage += "⚠️ 该读者存在以下历史记录，将一并删除：\n";
+                        if (borrowRecordCount > 0)
+                            confirmMessage += $"  • 借阅记录：{borrowRecordCount} 条\n";
+                        if (finePaymentCount > 0)
+                            confirmMessage += $"  • 缴费记录：{finePaymentCount} 条\n";
+                        confirmMessage += "\n此操作不可恢复！";
+                    }
+
+                    DialogResult dialogResult = MessageBox.Show(confirmMessage, "确认删除",
+                        MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+
+                    if (dialogResult != DialogResult.Yes)
+                        return;
+
+                    // 5. 开始事务删除（按顺序：缴费记录 → 借阅记录 → 读者）
+                    using (MySqlTransaction trans = conn.BeginTransaction())
+                    {
+                        try
+                        {
+                            // 第一步：删除缴费记录
+                            if (finePaymentCount > 0)
+                            {
+                                string deleteFinePayment = "DELETE FROM fine_payment WHERE reader_id = @id";
+                                using (MySqlCommand cmd = new MySqlCommand(deleteFinePayment, conn, trans))
+                                {
+                                    cmd.Parameters.AddWithValue("@id", currentReaderId);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+
+                            // 第二步：删除借阅记录
+                            if (borrowRecordCount > 0)
+                            {
+                                string deleteBorrowRecords = "DELETE FROM borrow_records WHERE reader_id = @id";
+                                using (MySqlCommand cmd = new MySqlCommand(deleteBorrowRecords, conn, trans))
+                                {
+                                    cmd.Parameters.AddWithValue("@id", currentReaderId);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+
+                            // 第三步：删除读者
+                            string deleteReader = "DELETE FROM readers WHERE reader_id = @id";
+                            using (MySqlCommand cmd = new MySqlCommand(deleteReader, conn, trans))
+                            {
+                                cmd.Parameters.AddWithValue("@id", currentReaderId);
+                                cmd.ExecuteNonQuery();
+                            }
+
+                            trans.Commit();
+
+                            // 显示成功消息
+                            string successMessage = $"✅ 删除成功！\n\n已删除读者【{readerName}】";
+                            if (borrowRecordCount > 0 || finePaymentCount > 0)
+                            {
+                                successMessage += "\n\n同时删除了：";
+                                if (borrowRecordCount > 0)
+                                    successMessage += $"\n  • 借阅记录 {borrowRecordCount} 条";
+                                if (finePaymentCount > 0)
+                                    successMessage += $"\n  • 缴费记录 {finePaymentCount} 条";
+                            }
+
+                            MessageBox.Show(successMessage, "删除成功",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                            LoadReaders();
+                            ClearForm();
+                        }
+                        catch
+                        {
+                            trans.Rollback();
+                            throw;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"删除失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"删除失败：{ex.Message}", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        }
-    }
-}
 
-        // 表格行点击-回填表单数据 ✅【原版代码、零修改、用英文列名匹配，绝对不会报错】
+        // 表格行点击-回填表单数据
         private void dgvReaders_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            // 修复：判断行索引是否有效，点击表头时不执行，避免报错
+            // 判断行索引是否有效，点击表头时不执行
             if (e.RowIndex < 0 || e.RowIndex >= dgvReaders.Rows.Count) return;
 
             DataGridViewRow row = dgvReaders.Rows[e.RowIndex];
-            // 回填文本框 ✅ 用数据库原始英文字段名，永远不会匹配失败
             txtName.Text = row.Cells["name"].Value.ToString();
             txtPhone.Text = row.Cells["phone"].Value == DBNull.Value ? "" : row.Cells["phone"].Value.ToString();
-            // 存储选中的读者ID
             currentReaderId = Convert.ToInt32(row.Cells["reader_id"].Value);
-            // 精准回填下拉框的读者类型
             string selectTypeName = row.Cells["type_name"].Value.ToString();
             cmbType.Text = selectTypeName;
         }
@@ -169,8 +291,8 @@ private void btnDel_Click(object sender, EventArgs e)
                 if (rows > 0)
                 {
                     MessageBox.Show("读者信息修改成功！", "成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    LoadReaders(); 
-                    ClearForm();   
+                    LoadReaders();
+                    ClearForm();
                 }
                 else
                 {
@@ -183,7 +305,7 @@ private void btnDel_Click(object sender, EventArgs e)
             }
         }
 
-        // 封装：清空表单+重置选中状态 公共方法
+        // 封装：清空表单+重置选中状态
         private void ClearForm()
         {
             txtName.Clear();
